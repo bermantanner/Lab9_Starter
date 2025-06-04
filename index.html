@@ -84,10 +84,20 @@
       <button>End Timer</button>
       <button>Console Trace</button>
       <button>Trigger a Global Error</button>
+      <button>tryCatchDemo</button>
     </section>
   </main>
 
+  <script src="https://cdn.trackjs.com/agent/v3/latest/t.js"></script>
   <script>
+    window.TrackJS && TrackJS.install({ 
+      token: "0af2ce73de864d698e3b97305363fb29"
+      // for more configuration options, see https://docs.trackjs.com
+    });
+  </script>
+
+  <script>
+    
     let form = document.querySelector('form');
     form.addEventListener('submit', e => {
       e.preventDefault();
@@ -95,13 +105,111 @@
       let firstNum = document.querySelector('#first-num').value;
       let secondNum = document.querySelector('#second-num').value;
       let operator = document.querySelector('#operator').value;
-      output.innerHTML = eval(`${firstNum} ${operator} ${secondNum}`);
+      try {
+        // Input validation
+        if (isNaN(firstNum) || isNaN(secondNum)) {
+          throw new InvalidInputError("Both inputs must be valid numbers.");
+        }
+
+        if (operator === '/' && Number(secondNum) === 0) {
+          throw new InvalidInputError("Division by zero is not allowed.");
+        }
+
+        const result = eval(`${firstNum} ${operator} ${secondNum}`);
+        output.innerHTML = result;
+      } catch (err) {
+        if (err instanceof InvalidInputError) {
+          console.error("Custom Input Error:", err.message);
+          output.innerHTML = "Error: " + err.message;
+        } else {
+          console.error("Unexpected Error:", err);
+          output.innerHTML = "Unexpected error occurred.";
+        }
+      } finally {
+        console.log("Calculation attempt complete.");
+      }
+
     });
 
     let errorBtns = Array.from(document.querySelectorAll('#error-btns > button'));
 
     // Start your code here
     // You may move this JS to another file if you wish
+    class InvalidInputError extends Error {
+      constructor(message) {
+        super(message);
+        this.name = "InvalidInputError";
+      }
+    }
+
+
+    
+    
+    const data = {position: "Software Engineer", YOE: "100+"};
+    const array = [
+      { name: "Tanner", job: "None" },
+      { name: "Adam", job: "Chef" }
+    ];
+
+    const buttonFunctions = [
+      () => console.log("Logging this data:", data),                         
+      () => console.error("console.error message."),                 
+      () => console.count("clicks"),                                         
+      () => console.warn("console.warn warning."),                 
+      () => console.assert(1 + 1 === 3, "Assertion failed: 1 + 1 !== 3"),      
+      () => console.clear(),                                                  
+      () => console.dir(document.body),                                         
+      () => console.dirxml(document.body),                               
+      () => {
+        console.group("Grouped Logs");
+        console.log("Hi");
+        console.log("Hey");
+      },                                                                    
+      () => console.groupEnd(),                                               
+      () => console.table(array),                                              
+      () => console.time("MyTimer"),                                       
+      () => console.timeEnd("MyTimer"),                                        
+      () => {
+        function a() {
+          function b() {
+            function c() {
+              console.trace("Trace from function c");
+            }
+            c();
+          }
+          b();
+        }
+        a();
+      },                                                                       
+      () => { throw new Error("Global error test"); },         
+      () => {
+        try {
+          // Try to access a DOM element that doesn't exist
+          const noExist = document.querySelector('#fake-element').innerText;
+          console.log(noExist);
+        } catch (err) {
+          console.error("Caught an error in try/catch:", err);
+        } finally {
+          console.log("This always run, even after an error.");
+        }
+      }            
+    ];
+
+    errorBtns.forEach((btn, idx) => {
+      btn.addEventListener('click', () => {
+        buttonFunctions[idx]?.();
+      });
+    });
+
+    window.onerror = function(message, source, lineno, colno, error) {
+      console.log("GLOBAL ERROR CAUGHT MAN!:");
+      console.log("WHAT'S UP?:", message);
+      console.log("WHERE??:", source);
+      console.log("WHERE????", lineno, "Column:", colno);
+      console.log("HUH?:", error);
+      // In production, you'd send this to your server
+      return true; // Prevent default browser error logging (optional)
+    };
   </script>
 </body>
 
